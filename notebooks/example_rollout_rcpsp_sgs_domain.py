@@ -125,11 +125,13 @@ def solve_rcpsp_rllib():
 def solve_rcpsp_stable_baseline():
     file = [f for f in get_data_available() if "j1201_5.sm" in f][0]
     file = [f for f in get_data_available() if "j601_9.sm" in f][0]
+    file = [f for f in get_data_available() if "j301_1.sm" in f][0]
     model: RCPSPModel = parse_file(file)
     from discrete_optimization.generic_tools.callbacks.loggers import \
         ObjectiveLogger
     from discrete_optimization.rcpsp.rcpsp_solvers import (CPSatRCPSPSolver,
                                                            ParametersCP)
+    from rcpsp_domains.rcpsp_sk_domain import records
 
     solver = CPSatRCPSPSolver(model)
     p = ParametersCP.default_cpsat()
@@ -152,11 +154,11 @@ def solve_rcpsp_stable_baseline():
             return_scheduled_in_state=True,
             use_cpm_for_cost=True,
             terminate_when_already_schedule=False,
-            dummy_cost_when_already_schedule=20,
+            dummy_cost_when_already_schedule=1,
             use_additive_makespan_for_cost=False,
-            nb_min_task_inserted=2,
-            nb_max_task_inserted=25,
-            filter_tasks=True,
+            nb_min_task_inserted=1,
+            nb_max_task_inserted=None,
+            filter_tasks=False,
             only_available_tasks=False,
         ),
     )
@@ -164,16 +166,16 @@ def solve_rcpsp_stable_baseline():
 
     solver_args = {
         "baselines_policy": "MlpPolicy",
-        "learn_config": {"total_timesteps": 100000},
+        "learn_config": {"total_timesteps": 300000},
         "verbose": 1,
-        # "learning_rate": 0.05,
+        # "learning_rate": 0.0001,
         "n_steps": 300,
         # "batch_size": 100
     }
     solver_args.update(
         {
             "policy_kwargs": dict(
-                net_arch=[dict(pi=[256, 256, 256, 128], vf=[256, 256, 256, 128])]
+                net_arch=[dict(pi=[256, 256, 128, 128], vf=[256, 256, 128, 128])]
             )
         }
     )
@@ -182,9 +184,6 @@ def solve_rcpsp_stable_baseline():
     # Start solving
     solver.solve()
 
-    fig, ax = plt.subplots(1)
-    records = np.array(domain_sk.records)
-    ax.plot(np.convolve(records, np.ones(30) / 30, mode="valid"))
     for k in range(100):
         episodes = rollout(
             domain=domain_sk,
@@ -208,6 +207,9 @@ def solve_rcpsp_stable_baseline():
             },
         )
         print(model.evaluate(solution_rcpsp), model.satisfy(solution_rcpsp))
+    fig, ax = plt.subplots(1)
+    records = np.array(records)
+    ax.plot(np.convolve(records, np.ones(30) / 30, mode="valid"))
     plt.show()
 
 
@@ -299,4 +301,4 @@ def solve_stochastic_rcpsp_stable_baseline():
 
 
 if __name__ == "__main__":
-    solve_stochastic_rcpsp_stable_baseline()
+    solve_rcpsp_stable_baseline()

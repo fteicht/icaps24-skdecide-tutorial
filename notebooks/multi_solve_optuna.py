@@ -12,48 +12,39 @@ Results can be viewed on optuna-dashboard with:
     optuna-dashboard optuna-journal.log
 
 """
-from skdecide.utils import rollout
-from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
-from skdecide.hub.solver.do_solver import PolicyMethodParams, BasePolicyMethod
-from skdecide.hub.solver.do_solver.do_solver_scheduling import DOSolver
 import logging
+
+from skdecide import rollout
+from skdecide.builders.domain.scheduling.scheduling_domains import \
+    SingleModeRCPSP
+from skdecide.hub.solver.do_solver import (BasePolicyMethod, DOSolver,
+                                           PolicyMethodParams)
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 import time
 from collections import defaultdict
 from typing import Any, Dict, List, Type
 
 import optuna
+from discrete_optimization.generic_tools.callbacks.loggers import \
+    ObjectiveLogger
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
+from discrete_optimization.generic_tools.cp_tools import (CPSolverName,
+                                                          ParametersCP)
+from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import \
+    TimedPercentilePruner
+from discrete_optimization.rcpsp.rcpsp_solvers import (  # LargeNeighborhoodSearchScheduling,
+    CP_RCPSP_MZN, CPSatRCPSPSolver, GA_RCPSP_Solver, LS_RCPSP_Solver,
+    PileSolverRCPSP)
 from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import Trial, TrialState
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available
-from discrete_optimization.rcpsp.rcpsp_solvers import (
-    CPSatRCPSPSolver,
-    GA_RCPSP_Solver,
-    # LargeNeighborhoodSearchScheduling,
-    LS_RCPSP_Solver,
-    CP_RCPSP_MZN,
-    PileSolverRCPSP,
-)
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
-from discrete_optimization.generic_tools.cp_tools import ParametersCP, CPSolverName
-from discrete_optimization.generic_tools.do_problem import ModeOptim
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.lp_tools import gurobi_available
-from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
-    TimedPercentilePruner,
-)
-import optuna
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 
 
-def run_optuna_multisolve():
-    file = [f for f in get_data_available() if "j1201_5.sm" in f][0]
-    # file = [f for f in get_data_available() if "j1201_5.sm" in f][0]
-    rcpsp_domain = load_domain(file_path=file)
-
+def run_optuna_multisolve(rcpsp_domain: SingleModeRCPSP):
     seed = 42  # set this to an integer to get reproducible results, else to None
-    optuna_nb_trials = 10000  # number of trials to launch
+    optuna_nb_trials = 100  # number of trials to launch
     # gurobi_full_license_available = False  # is the installed gurobi having a full license? (contrary to the license installed by `pip install gurobipy`)
     create_another_study = True  # True: generate a study name with timestamp to avoid overwriting previous study, False: keep same study name
     overwrite = False  # True: delete previous studies with same name (in particular, if create_another_study=False), False: keep the study and add trials to the existing ones
@@ -66,14 +57,14 @@ def run_optuna_multisolve():
     elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store duration of trials (updated during intermediate reports)
 
     # solvers to test
-    solvers_to_test: List[Type[SolverDO]] = \
-        [CPSatRCPSPSolver,
-         GA_RCPSP_Solver,
-         # LargeNeighborhoodSearchScheduling,
-         LS_RCPSP_Solver,
-         CP_RCPSP_MZN,
-         PileSolverRCPSP
-        ]
+    solvers_to_test: List[Type[SolverDO]] = [
+        CPSatRCPSPSolver,
+        GA_RCPSP_Solver,
+        # LargeNeighborhoodSearchScheduling,
+        LS_RCPSP_Solver,
+        CP_RCPSP_MZN,
+        PileSolverRCPSP,
+    ]
     # fixed kwargs per solver: either hyperparameters we do not want to search, or other parameters like time limits
     p = ParametersCP.default_cpsat()
     p.nb_process = 6
@@ -83,16 +74,26 @@ def run_optuna_multisolve():
         {
             CPSatRCPSPSolver: dict(parameters_cp=p, warmstart=True),
             CP_RCPSP_MZN: dict(parameters_cp=p),
-            GA_RCPSP_Solver: dict(max_evals=10000)
+            GA_RCPSP_Solver: dict(max_evals=10000),
         },
     )
-
     # restrict some hyperparameters choices, for some solvers (making use of `kwargs_by_name` of `suggest_with_optuna`)
     suggest_optuna_kwargs_by_name_by_solver: Dict[
         Type[SolverDO], Dict[str, Dict[str, Any]]
-    ] = defaultdict(dict, {CP_RCPSP_MZN: {"cp_solver_name": {"choices": [CPSolverName.CHUFFED,
-                                                                         CPSolverName.ORTOOLS,
-                                                                         CPSolverName.GECODE]}}})
+    ] = defaultdict(
+        dict,
+        {
+            CP_RCPSP_MZN: {
+                "cp_solver_name": {
+                    "choices": [
+                        CPSolverName.CHUFFED,
+                        CPSolverName.ORTOOLS,
+                        CPSolverName.GECODE,
+                    ]
+                }
+            }
+        },
+    )
 
     # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
     # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}"
@@ -117,13 +118,15 @@ def run_optuna_multisolve():
             for h in solver_class.get_hyperparameters_names()
             if h not in kwargs_fixed_by_solver[solver_class]
         ]
-        suggested_hyperparameters_kwargs = solver_class.suggest_hyperparameters_with_optuna(
-            names=hyperparameters_names,
-            trial=trial,
-            prefix=solver_name + ".",
-            kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver[
-                solver_class
-            ],  # options to restrict the choices of some hyperparameter
+        suggested_hyperparameters_kwargs = (
+            solver_class.suggest_hyperparameters_with_optuna(
+                names=hyperparameters_names,
+                trial=trial,
+                prefix=solver_name + ".",
+                kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver[
+                    solver_class
+                ],  # options to restrict the choices of some hyperparameter
+            )
         )
         # use existing value if corresponding to a previous complete trial
         # (it may happen that the sampler repropose same params)
@@ -152,42 +155,52 @@ def run_optuna_multisolve():
         logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
         # construct kwargs for __init__, init_model, and solve
-        kwargs = dict(kwargs_fixed_by_solver[solver_class])  # copy the frozen kwargs dict
+        kwargs = dict(
+            kwargs_fixed_by_solver[solver_class]
+        )  # copy the frozen kwargs dict
         kwargs.update(suggested_hyperparameters_kwargs)
         starting_time = time.perf_counter()
         # solver init
         kwargs["callbacks"] = [
-                OptunaCallback(
-                    trial=trial,
-                    starting_time=starting_time,
-                    elapsed_time_attr=elapsed_time_attr,
-                    report_time=True,
-                    # report intermediate values according to elapsed time instead of iteration number
-                ),
-                ObjectiveLogger(
-                    step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
-                ),
-            ]
-        solver = DOSolver(domain_factory=lambda: rcpsp_domain,
-                          policy_method_params=PolicyMethodParams(base_policy_method=BasePolicyMethod.FOLLOW_GANTT),
-                          method=None,
-                          do_solver_type=solver_class,
-                          dict_params=kwargs)
+            OptunaCallback(
+                trial=trial,
+                starting_time=starting_time,
+                elapsed_time_attr=elapsed_time_attr,
+                report_time=True,
+                # report intermediate values according to elapsed time instead of iteration number
+            ),
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            ),
+        ]
+        solver = DOSolver(
+            domain_factory=lambda: rcpsp_domain,
+            policy_method_params=PolicyMethodParams(
+                base_policy_method=BasePolicyMethod.FOLLOW_GANTT
+            ),
+            method=None,
+            do_solver_type=solver_class,
+            dict_params=kwargs,
+        )
         try:
             solver.solve()
             # store elapsed time
             elapsed_time = time.perf_counter() - starting_time
             trial.set_user_attr(elapsed_time_attr, elapsed_time)
-            episodes = rollout(domain=rcpsp_domain,
-                               solver=solver,
-                               from_memory=rcpsp_domain.get_initial_state(),
-                               verbose=False,
-                               return_episodes=True, num_episodes=1)
+            episodes = rollout(
+                domain=rcpsp_domain,
+                solver=solver,
+                from_memory=rcpsp_domain.get_initial_state(),
+                verbose=False,
+                return_episodes=True,
+                num_episodes=1,
+            )
             values = episodes[0][-1]
             fit = sum([v.cost for v in values])
             return -fit
         except:
             raise optuna.TrialPruned("failed")
+
     storage = JournalStorage(JournalFileStorage(storage_path))
     if overwrite:
         try:
@@ -207,7 +220,3 @@ def run_optuna_multisolve():
     )
     study.set_metric_names(["makespan"])
     study.optimize(objective, n_trials=optuna_nb_trials)
-
-
-if __name__ == "__main__":
-    run_optuna_multisolve()

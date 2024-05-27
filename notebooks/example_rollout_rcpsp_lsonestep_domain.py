@@ -12,7 +12,8 @@ from discrete_optimization.rcpsp.rcpsp_parser import (RCPSPModel,
                                                       get_data_available,
                                                       parse_file)
 from rcpsp_domains.rcpsp_sk_domain_local_search import (
-    ParamsDomainEncodingLSOneStep, RCPSP_LS_Domain, RCPSP_LS_Domain_OneStep)
+    ParamsDomainEncodingLSOneStep, RCPSP_LS_Domain, RCPSP_LS_Domain_OneStep,
+    records)
 from skdecide.hub.solver.ray_rllib import RayRLlib
 from skdecide.hub.solver.stable_baselines import StableBaseline
 from skdecide.utils import rollout
@@ -115,15 +116,15 @@ def solve_rcpsp_stable_baseline():
     sol, fit = res.get_best_solution_fit()
     print("Solution found by CP : ", model.evaluate(sol), model.satisfy(sol))
     print("Status solver : ", solver.get_status_solver())
-    params = ParamsDomainEncodingLSOneStep(action_as_float=False, action_as_int=True)
+    params = ParamsDomainEncodingLSOneStep(action_as_float=True, action_as_int=False)
     domain_sk = RCPSP_LS_Domain_OneStep(model, params_domain_encoding=params)
     from stable_baselines3 import A2C, DDPG, DQN, PPO, SAC
 
     solver_args = {
         "baselines_policy": "MlpPolicy",
-        "learn_config": {"total_timesteps": 50000},
+        "learn_config": {"total_timesteps": 300000},
         "verbose": 1,
-        # "learning_rate": 0.01,
+        "learning_rate": 0.005,
         # "n_steps": 1000,
         # "ent_coef": 0.03,
         # "normalize_advantage": True,
@@ -139,16 +140,18 @@ def solve_rcpsp_stable_baseline():
     solver_args.update(
         {
             "policy_kwargs": dict(
-                net_arch=[dict(pi=[256, 256, 256, 128], vf=[256, 256, 256, 128])]
+                net_arch=[
+                    dict(pi=[256, 256, 128, 128, 128], vf=[256, 256, 128, 128, 128])
+                ]
             )
         }
     )
-    solver_args["algo_class"] = PPO
+    solver_args["algo_class"] = A2C
     solver = StableBaseline(domain_factory=lambda: domain_sk, **solver_args)
     solver.solve()
     fig, ax = plt.subplots(1)
-    records = np.array(domain_sk.records)
-    ax.plot(np.convolve(records, np.ones(30) / 30, mode="valid"))
+    records_ = np.array(records)
+    ax.plot(np.convolve(records_, np.ones(30) / 30, mode="valid"))
     for k in range(100):
         episodes = rollout(
             domain=domain_sk,

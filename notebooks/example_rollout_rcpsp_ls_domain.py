@@ -12,7 +12,8 @@ from discrete_optimization.rcpsp.rcpsp_parser import (RCPSPModel,
                                                       get_data_available,
                                                       parse_file)
 from rcpsp_domains.rcpsp_sk_domain_local_search import (ParamsDomainEncodingLS,
-                                                        RCPSP_LS_Domain)
+                                                        RCPSP_LS_Domain,
+                                                        records)
 from skdecide.hub.solver.ray_rllib import RayRLlib
 from skdecide.hub.solver.stable_baselines import StableBaseline
 from skdecide.utils import rollout
@@ -69,6 +70,7 @@ def solve_rcpsp_rllib():
     from ray.rllib.algorithms.ppo import PPO
 
     config = PPO.get_default_config()
+    config.log_level = "INFO"
     # config.num_rollout_workers = 5
     # config.num_env_runners = 5
     solver = RayRLlib(
@@ -152,8 +154,8 @@ def solve_rcpsp_stable_baseline():
     solver = StableBaseline(domain_factory=lambda: domain_sk, **solver_args)
     solver.solve()
     fig, ax = plt.subplots(1)
-    records = np.array(domain_sk.records)
-    ax.plot(np.convolve(records, np.ones(30) / 30, mode="valid"))
+    records_ = np.array(records)
+    ax.plot(np.convolve(records_, np.ones(30) / 30, mode="valid"))
     for k in range(100):
         episodes = rollout(
             domain=domain_sk,

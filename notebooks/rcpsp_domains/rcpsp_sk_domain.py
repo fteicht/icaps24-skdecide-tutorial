@@ -13,6 +13,7 @@ from skdecide.domains import RLDomain
 from skdecide.hub.space.gym import BoxSpace, DiscreteSpace, ListSpace, SetSpace
 
 logger = logging.getLogger(__name__)
+records = []
 
 
 class D(RLDomain, FullyObservable):
@@ -278,10 +279,11 @@ class RCPSPSGSDomain(D):
         return DiscreteSpace(self.nb_tasks)
 
     def _state_reset(self) -> D.T_state:
+        global records
         if self.state[-1, 0]:
-            self.records.append(self.state[-1, 1])
-            if len(self.records) >= 30:
-                logger.info(f"{sum(self.records[-30:])/30}")
+            records.append(self.state[-1, 1])
+            if len(records) >= 30:
+                logger.info(f"{sum(records[-30:])/30}")
         self.state = np.copy(self.initial_state)
         self.resource_availability = np.copy(self.initial_resource_availability)
         self.scheduled_tasks = set()
