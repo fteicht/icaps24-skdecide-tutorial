@@ -1,5 +1,6 @@
+import os
+os.environ["DO_SKIP_MZN_CHECK"] = "1"
 from typing import Any, Dict, List, Optional, Set, Union
-
 import matplotlib.pyplot as plt
 # [allow for running minizinc inside a notebook]
 import nest_asyncio
