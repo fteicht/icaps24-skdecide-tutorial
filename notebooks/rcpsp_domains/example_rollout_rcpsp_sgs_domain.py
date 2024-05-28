@@ -2,18 +2,15 @@ import os
 
 os.environ["RAY_DEDUP_LOGS"] = "0"
 import logging
-
 import matplotlib.pyplot as plt
 import numpy as np
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import (RCPSPModel,
                                                       get_data_available,
                                                       parse_file)
-from ray.rllib.algorithms import AlgorithmConfig
-from rcpsp_domains.rcpsp_sk_domain import ParamsDomainEncoding, RCPSPSGSDomain
-from rcpsp_domains.stochastic_rcpsp_sk_domain import StochasticRCPSPSGSDomain
-from skdecide import autocast_all
-from skdecide.hub.solver.mcts import MCTS
+from rcpsp_sk_domain import ParamsDomainEncoding, RCPSPSGSDomain
+from stochastic_rcpsp_sk_domain import StochasticRCPSPSGSDomain, records
+from copy import deepcopy
 from skdecide.hub.solver.ray_rllib import RayRLlib
 from skdecide.hub.solver.stable_baselines import StableBaseline
 from skdecide.utils import rollout
@@ -61,19 +58,19 @@ def rollout_rcpsp():
 
 
 def solve_rcpsp_rllib():
-    file = [f for f in get_data_available() if "j301_8.sm" in f][0]
+    file = [f for f in get_data_available() if "j301_1.sm" in f][0]
     # file = [f for f in get_data_available() if "j1201_5.sm" in f][0]
     model: RCPSPModel = parse_file(file)
     domain_sk = RCPSPSGSDomain(
         model,
         params_domain_encoding=ParamsDomainEncoding(
-            return_times_in_state=True,
+            return_times_in_state=False,
             return_scheduled_in_state=True,
-            use_cpm_for_cost=False,
+            use_cpm_for_cost=True,
             terminate_when_already_schedule=False,
             dummy_cost_when_already_schedule=30,
-            use_additive_makespan_for_cost=True,
-            nb_min_task_inserted=8,
+            use_additive_makespan_for_cost=False,
+            nb_min_task_inserted=None,
             nb_max_task_inserted=25,
             filter_tasks=True,
             only_available_tasks=False,
@@ -85,17 +82,17 @@ def solve_rcpsp_rllib():
     from ray.rllib.algorithms.impala import Impala
     from ray.rllib.algorithms.ppo import PPO
     from ray.rllib.algorithms.sac import SAC
-
     ac = DQN.get_default_config()
-    ac.lr = 1e-4
-    # ac.framework("torch")
+    ac.lr = 5e-3
+    # ac.framework("tf")
     # ac.num_env_runners = 8
     # ac.num_workers = 1
     # ac.num_env_runners = 1
     # ac.sgd_minibatch_size = 16
     # ac.rollout_fragment_length = "auto"
+    # ac.log_level = "DEBUG"
     solver_factory = lambda: RayRLlib(
-        domain_factory=lambda: domain_sk.shallow_copy(),
+        domain_factory=lambda: deepcopy(domain_sk), #domain_sk.shallow_copy(),
         algo_class=DQN,
         config=ac,
         train_iterations=100,
@@ -131,8 +128,7 @@ def solve_rcpsp_stable_baseline():
         ObjectiveLogger
     from discrete_optimization.rcpsp.rcpsp_solvers import (CPSatRCPSPSolver,
                                                            ParametersCP)
-    from rcpsp_domains.rcpsp_sk_domain import records
-
+    from rcpsp_sk_domain import records
     solver = CPSatRCPSPSolver(model)
     p = ParametersCP.default_cpsat()
     p.time_limit = 2
@@ -272,8 +268,8 @@ def solve_stochastic_rcpsp_stable_baseline():
     # Start solving
     solver.solve()
     fig, ax = plt.subplots(1)
-    records = np.array(domain_sk.records)
-    ax.plot(np.convolve(records, np.ones(30) / 30, mode="valid"))
+    records_ = np.array(records)
+    ax.plot(np.convolve(records_, np.ones(30) / 30, mode="valid"))
     for k in range(100):
         episodes = rollout(
             domain=domain_sk,
@@ -301,4 +297,4 @@ def solve_stochastic_rcpsp_stable_baseline():
 
 
 if __name__ == "__main__":
-    solve_rcpsp_stable_baseline()
+    solve_rcpsp_rllib()

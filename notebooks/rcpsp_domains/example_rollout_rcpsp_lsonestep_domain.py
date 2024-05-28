@@ -11,7 +11,7 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import (RCPSPModel,
                                                       get_data_available,
                                                       parse_file)
-from rcpsp_domains.rcpsp_sk_domain_local_search import (
+from rcpsp_sk_domain_local_search import (
     ParamsDomainEncodingLSOneStep, RCPSP_LS_Domain, RCPSP_LS_Domain_OneStep,
     records)
 from skdecide.hub.solver.ray_rllib import RayRLlib
