@@ -8,7 +8,6 @@ from discrete_optimization.rcpsp.rcpsp_utils import compute_graph_rcpsp
 
 this_folder = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(this_folder, "../../")))
-print(sys.path[-1])
 import logging
 
 import numpy as np
