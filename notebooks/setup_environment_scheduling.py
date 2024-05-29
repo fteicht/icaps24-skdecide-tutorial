@@ -44,6 +44,7 @@ def download_files_needed():
         "rcpsp_sk_domain_local_search.py",
         "stochastic_rcpsp_sk_domain.py",
         "multi_solve_optuna.py",
+        "optuna_journal_offline.log"
     ]:
         subprocess.run(
             f"wget https://raw.githubusercontent.com/fteicht/icaps24-skdecide-tutorial/gpd/rcpsp_rl/notebooks/rcpsp_domains/{script} -O {os.path.join(module_path, script)}",

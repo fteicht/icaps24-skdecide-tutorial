@@ -42,19 +42,24 @@ from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import Trial, TrialState
 
 
-def run_optuna_multisolve(rcpsp_domain: SingleModeRCPSP):
+def run_optuna_multisolve(rcpsp_domain: SingleModeRCPSP, name_file_log: str="optuna_journal.log"):
     seed = 42  # set this to an integer to get reproducible results, else to None
     optuna_nb_trials = 100  # number of trials to launch
-    # gurobi_full_license_available = False  # is the installed gurobi having a full license? (contrary to the license installed by `pip install gurobipy`)
-    create_another_study = True  # True: generate a study name with timestamp to avoid overwriting previous study, False: keep same study name
-    overwrite = False  # True: delete previous studies with same name (in particular, if create_another_study=False), False: keep the study and add trials to the existing ones
+    # gurobi_full_license_available = False  # is the installed gurobi having a full license?
+    # (contrary to the license installed by `pip install gurobipy`)
+    create_another_study = True  # True: generate a study name with timestamp to avoid overwriting previous study,
+    # False: keep same study name
+    overwrite = False  # True: delete previous studies with same name (in particular, if create_another_study=False),
+    # False: keep the study and add trials to the existing ones
     max_time_per_solver = 10  # max duration per solver (seconds)
     min_time_per_solver = 5  # min duration before pruning a solver (seconds)
 
     suffix = f"-{time.time()}" if create_another_study else ""
     study_name = f"rcpsp_all_solvers-auto-pruning-{suffix}"
-    storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
-    elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store duration of trials (updated during intermediate reports)
+    storage_path = f"./{name_file_log}"  # NFS path for distributed optimization
+    elapsed_time_attr = "elapsed_time"
+    # name of the user attribute used to store duration of trials
+    # (updated during intermediate reports)
 
     # solvers to test
     solvers_to_test: List[Type[SolverDO]] = [
@@ -220,3 +225,15 @@ def run_optuna_multisolve(rcpsp_domain: SingleModeRCPSP):
     )
     study.set_metric_names(["makespan"])
     study.optimize(objective, n_trials=optuna_nb_trials)
+
+
+def run_example_study():
+    from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+    from discrete_optimization.rcpsp.rcpsp_parser import get_data_available
+    file = [f for f in get_data_available() if "j1201_1.sm" in f][0]
+    rcpsp_domain = load_domain(file)
+    run_optuna_multisolve(rcpsp_domain=rcpsp_domain, name_file_log="optuna_journal_offline.log")
+
+
+if __name__ == "__main__":
+    run_example_study()

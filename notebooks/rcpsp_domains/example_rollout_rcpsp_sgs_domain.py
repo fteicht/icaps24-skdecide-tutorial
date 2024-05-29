@@ -92,7 +92,7 @@ def solve_rcpsp_rllib():
     # ac.rollout_fragment_length = "auto"
     # ac.log_level = "DEBUG"
     solver_factory = lambda: RayRLlib(
-        domain_factory=lambda: deepcopy(domain_sk), #domain_sk.shallow_copy(),
+        domain_factory=lambda: deepcopy(domain_sk),
         algo_class=DQN,
         config=ac,
         train_iterations=100,
