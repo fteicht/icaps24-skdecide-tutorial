@@ -22,7 +22,9 @@ def install_skdecide(using_nightly_version=True, force_reinstall=False):
         if os.path.exists('release.zip'):
             os.remove('release.zip')
         # look for nightly build download url
-        release_curl_res = subprocess.run('curl -L -k -s -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/airbus/scikit-decide/releases/tags/nightly', capture_output=True, shell=True)
+        release_curl_res = subprocess.run('curl -L -k -s -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/airbus/scikit-decide/releases/tags/nightly',
+                                          capture_output=True,
+                                          shell=True)
         release_dict = json.loads(release_curl_res.stdout)
         release_download_url = sorted(
             release_dict["assets"], key=lambda d: d["updated_at"]
@@ -30,8 +32,8 @@ def install_skdecide(using_nightly_version=True, force_reinstall=False):
         print(release_download_url)
 
         # download and unzip
-        subprocess.run(f'wget --output-document=release.zip {release_download_url}', shell=True)
-        subprocess.run('unzip -o release.zip', shell=True)
+        subprocess.run(f'wget --output-document=release.zip {release_download_url}', capture_output=True, shell=True)
+        subprocess.run('unzip -o release.zip', capture_output=True, shell=True)
 
         # get proper wheel name according to python version and platform used
         wheel_pythonversion_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
@@ -48,10 +50,10 @@ def install_skdecide(using_nightly_version=True, force_reinstall=False):
 
     if on_colab:
         # uninstall google protobuf conflicting with ray and sb3
-        subprocess.run('pip uninstall -y protobuf', shell=True)
+        subprocess.run('pip uninstall -y protobuf', capture_output=True, shell=True)
 
     # install scikit-decide with all extras
-    subprocess.run(f'pip --default-timeout=1000 install --upgrade --force-reinstall {skdecide_pip_spec}', shell=True)
+    subprocess.run(f'pip --default-timeout=1000 install --upgrade --force-reinstall {skdecide_pip_spec}', capture_output=True, shell=True)
 
     if on_colab:
         # be sure to load the proper cffi (downgraded compared to the one initially on colab)
