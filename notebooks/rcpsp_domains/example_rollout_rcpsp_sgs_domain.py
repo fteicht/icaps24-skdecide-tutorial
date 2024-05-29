@@ -72,7 +72,7 @@ def solve_rcpsp_rllib():
             use_additive_makespan_for_cost=False,
             nb_min_task_inserted=None,
             nb_max_task_inserted=25,
-            filter_tasks=True,
+            filter_tasks=False,
             only_available_tasks=False,
         ),
     )
