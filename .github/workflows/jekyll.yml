@@ -44,7 +44,6 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Copy the html notebooks and images to the docs folder
         run: |
-          ls notebooks
           mkdir docs/html_notebooks
           cp notebooks/icaps24_skdecide_tutorial_*.html docs/html_notebooks
           cp -r notebooks/images docs/html_notebooks
