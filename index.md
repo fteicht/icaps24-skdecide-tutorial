@@ -42,11 +42,11 @@ live Python coding sessions.</b></span>
 ### Agenda
 
 - **Introduction** (15 mn): General concepts of the library: domains, solvers, spaces, hub, features
-- **Part I** (90mn) : Solving domains (aka problems) with auto-selected compatible solvers
-   - Notebook I : Solving control problems with reinforcement learning, and genetic programming solvers
-   - Notebook II : Solving scheduling problems with constraint programming, operation research, and reinforcement learning solvers
-   - Notebook III : Solving PDDL problems with classical planning, and reinforcement learning solvers
-- **Part II** (60mn) : Implementing your own domains and solvers
-   - Notebook IV : Implementing a scikit-decide domain for RDDL problems
-   - Notebook V :  Implementing a scikit-decide solver embedding the JaxPlan and GurobiPlan planners and solving RDDL-based scikit-decide domains
-- **Conclusion** (15mn) : Applications, contribution guidelines, and future developments
+- **Part I** (90mn): Solving domains (aka problems) with auto-selected compatible solvers
+   - Notebook I: Solving control problems with reinforcement learning, and genetic programming solvers
+   - Notebook II: Solving scheduling problems with constraint programming, operation research, and reinforcement learning solvers
+   - Notebook III: Solving PDDL problems with classical planning, and reinforcement learning solvers
+- **Part II** (60mn): Implementing your own domains and solvers
+   - Notebook IV: Implementing a scikit-decide domain for RDDL problems
+   - Notebook V: Implementing a scikit-decide solver embedding the JaxPlan and GurobiPlan planners and solving RDDL-based scikit-decide domains
+- **Conclusion** (15mn): Applications, contribution guidelines, and future developments
