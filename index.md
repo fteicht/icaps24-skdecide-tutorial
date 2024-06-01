@@ -6,6 +6,8 @@ layout: page
 hero_height: is-fullwidth
 ---
 
+<div markdown="span" style="margin-bottom: 10px; margin-top: 10px; overflow: hidden; color: #8A323d; background-color: #e8c9ce; border-color: #bce8f1; padding: 15px; border: 1px solid transparent; border-radius: 4px;">&#128227; <b>NEW:</b> the tutorial notebooks are now <a href="https://fteicht.github.io/icaps24-skdecide-tutorial/docs/notebooks/">online</a>! </div>
+
 ### Summary
 
 [Scikit-decide](https://github.com/airbus/scikit-decide)
