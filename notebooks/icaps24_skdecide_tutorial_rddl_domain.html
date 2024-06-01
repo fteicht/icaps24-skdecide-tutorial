@@ -8115,7 +8115,7 @@ The pyrddlgym-project provides the <a href="https://github.com/pyrddlgym-project
 <span class="n">solver_factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">StableBaseline</span><span class="p">(</span>
     <span class="n">domain_factory</span><span class="o">=</span><span class="n">domain_factory</span><span class="p">,</span>
     <span class="n">algo_class</span><span class="o">=</span><span class="n">SB3_PPO</span><span class="p">,</span>
-    <span class="n">baselines_policy</span><span class="o">=</span><span class="s2">"MlpPolicy"</span><span class="p">,</span>
+    <span class="n">baselines_policy</span><span class="o">=</span><span class="s2">"MultiInputPolicy"</span><span class="p">,</span>
     <span class="n">learn_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"total_timesteps"</span><span class="p">:</span> <span class="mi">10000</span><span class="p">},</span>
     <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span>
 <span class="p">)</span>
