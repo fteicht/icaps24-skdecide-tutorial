@@ -7516,7 +7516,8 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="ICAPS24-SkDecide-Tutorial:-Implementing-a-scikit-decide-solver-embedding-the-JaxPlan-and-GurobiPlan-planners-and-solving-RDDL-based-scikit-decide-domains">ICAPS24 SkDecide Tutorial: Implementing a scikit-decide solver embedding the JaxPlan and GurobiPlan planners and solving RDDL-based scikit-decide domains<a class="anchor-link" href="#ICAPS24-SkDecide-Tutorial:-Implementing-a-scikit-decide-solver-embedding-the-JaxPlan-and-GurobiPlan-planners-and-solving-RDDL-based-scikit-decide-domains">¶</a></h1>
+<h1 id="ICAPS24-SkDecide-Tutorial:-Implementing-a-scikit-decide-solver-embedding-the-JaxPlan-and-GurobiPlan-planners-and-solving-RDDL-based-scikit-decide-domains">ICAPS24 SkDecide Tutorial: Implementing a scikit-decide solver embedding the JaxPlan and GurobiPlan planners and solving RDDL-based scikit-decide domains<a class="anchor-link" href="#ICAPS24-SkDecide-Tutorial:-Implementing-a-scikit-decide-solver-embedding-the-JaxPlan-and-GurobiPlan-planners-and-solving-RDDL-based-scikit-decide-domains">¶</a></h1><p>Florent Teichteil Koenigsbuch, Alexandre Arnold, Guillaume Povéda</p>
+<p>Credits to <a href="https://imacs.polytechnique.fr/">IMACS</a></p>
 </div>
 </div>
 </div>
@@ -7564,7 +7565,10 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="o">!</span>wget<span class="w"> </span>https://raw.githubusercontent.com/fteicht/icaps24-skdecide-tutorial/main/notebooks/install_skdecide.py
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">'install_skdecide.py'</span><span class="p">):</span>
+    <span class="o">!</span>wget<span class="w"> </span>https://raw.githubusercontent.com/fteicht/icaps24-skdecide-tutorial/main/notebooks/install_skdecide.py
 
 <span class="kn">from</span> <span class="nn">install_skdecide</span> <span class="kn">import</span> <span class="n">install_skdecide</span>
 <span class="n">install_skdecide</span><span class="p">(</span><span class="n">using_nightly_version</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_reinstall</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
